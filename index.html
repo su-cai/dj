@@ -38,18 +38,18 @@
   </style>
 </head>
 <body class="no-select">
-  <!-- 10张竖屏图片容器 ✅ 全部本地路径 -->
+  <!-- 10张竖屏图片容器 ✅ 全部改为【根目录】路径 -->
   <div id="slider" class="img-container h-screen w-full relative">
-    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img1.jpg" class="h-full w-full object-cover" alt="竖屏图片1"></div>
-    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img2.jpg" class="h-full w-full object-cover" alt="竖屏图片2"></div>
-    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img3.jpg" class="h-full w-full object-cover" alt="竖屏图片3"></div>
-    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img4.jpg" class="h-full w-full object-cover" alt="竖屏图片4"></div>
-    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img5.jpg" class="h-full w-full object-cover" alt="竖屏图片5"></div>
-    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img6.jpg" class="h-full w-full object-cover" alt="竖屏图片6"></div>
-    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img7.jpg" class="h-full w-full object-cover" alt="竖屏图片7"></div>
-    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img8.jpg" class="h-full w-full object-cover" alt="竖屏图片8"></div>
-    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img9.jpg" class="h-full w-full object-cover" alt="竖屏图片9"></div>
-    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img10.jpg" class="h-full w-full object-cover" alt="竖屏图片10"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="img1.jpg" class="h-full w-full object-cover" alt="竖屏图片1"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="img2.jpg" class="h-full w-full object-cover" alt="竖屏图片2"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="img3.jpg" class="h-full w-full object-cover" alt="竖屏图片3"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="img4.jpg" class="h-full w-full object-cover" alt="竖屏图片4"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="img5.jpg" class="h-full w-full object-cover" alt="竖屏图片5"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="img6.jpg" class="h-full w-full object-cover" alt="竖屏图片6"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="img7.jpg" class="h-full w-full object-cover" alt="竖屏图片7"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="img8.jpg" class="h-full w-full object-cover" alt="竖屏图片8"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="img9.jpg" class="h-full w-full object-cover" alt="竖屏图片9"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="img10.jpg" class="h-full w-full object-cover" alt="竖屏图片10"></div>
   </div>
 
   <!-- ✅ 完美布局：头像 + 关注按钮 中心点对齐头像底部 (精准半压+整体上移+不压点赞) -->
@@ -82,14 +82,13 @@
     </div>
   </div>
 
-  <!-- ✅ 扫码付费弹窗 ✔️ 补全【本地二维码图片路径】 核心修改处 -->
+  <!-- ✅ 扫码付费弹窗 ✔️ 二维码改为【根目录】路径 -->
   <div id="payModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
     <div class="bg-white rounded-2xl w-[90%] max-w-[380px] p-6 flex flex-col items-center">
       <h3 class="text-[#e62143] text-xl font-bold mb-4">解锁更多内容 · 扫码付款</h3>
       <p class="text-gray-600 text-center mb-5 text-sm">已浏览免费内容，扫码解锁海量高清图集+完整权限</p>
-      <!-- 核心修改：付费二维码本地路径 -->
       <div class="w-[220px] h-[220px] rounded-lg overflow-hidden">
-        <img src="./img/pay-code.jpg" class="w-full h-full object-cover" alt="付费二维码">
+        <img src="pay-code.jpg" class="w-full h-full object-cover" alt="付费二维码">
       </div>
       <p class="text-gray-500 text-xs mb-6">支付成功自动解锁，微信/支付宝扫码，永久有效</p>
       <button id="closeModal" class="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded-full text-gray-700 font-medium transition-colors">
@@ -111,24 +110,24 @@
       return num.toString();
     }
 
-    // ========== ✅ 核心升级：10张图【专属本地头像+专属固定数据+点赞状态】永久记忆 ==========
+    // ========== ✅ 核心升级：10张图【专属根目录头像+专属固定数据+点赞状态】永久记忆 ==========
     const slider = document.getElementById('slider');
     const images = slider.querySelectorAll('div');
     const total = images.length;
     let currentIndex = 0;
     const screenHeight = window.innerHeight;
-    // ✅ 10个头像全部本地路径，一一对应10张图片
+    // ✅ 10个头像全部改为【根目录】路径，一一对应10张图片
     const avatarList = [
-      "./avatar/tou1.jpg",
-      "./avatar/tou2.jpg",
-      "./avatar/tou3.jpg",
-      "./avatar/tou4.jpg",
-      "./avatar/tou5.jpg",
-      "./avatar/tou6.jpg",
-      "./avatar/tou7.jpg",
-      "./avatar/tou8.jpg",
-      "./avatar/tou9.jpg",
-      "./avatar/tou10.jpg"
+      "tou1.jpg",
+      "tou2.jpg",
+      "tou3.jpg",
+      "tou4.jpg",
+      "tou5.jpg",
+      "tou6.jpg",
+      "tou7.jpg",
+      "tou8.jpg",
+      "tou9.jpg",
+      "tou10.jpg"
     ];
     // 存储10张图片的【专属数据】+【点赞状态】，页面加载后永久固定
     const imgDataList = [];
