@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>竖屏图片浏览 - 完美仿抖音交互（头像半压关注+记忆数据+点赞状态+付费弹窗）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .no-select {
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        user-select: none;
+      }
+    }
+  </style>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; background: #000; }
+    .img-container { transition: transform 0.4s ease-out; }
+    /* 抖音同款按钮点击反馈：按压缩小+回弹 */
+    .dy-btn { transform: scale(1); transition: transform 0.2s ease; }
+    .dy-btn:active { transform: scale(0.88); }
+    /* ✅ 抖音核心样式：默认【实心白色+0.9透明度】，点赞变红实心无透明，完美原版 */
+    .icon-default { color: #ffffff; opacity: 0.9; }
+    .num-default { color: #ffffff; opacity: 0.9; font-size: 13px; text-align: center; margin-top: 6px; line-height: 1; }
+    .like-active { color: #e62143 !important; opacity: 1 !important; font-weight: 900; }
+
+    /* ✅ 终极完美样式：头像+关注按钮 整体上移+精准半压+无重叠 核心样式 */
+    .avatar-box { position: fixed; right: 3vw; bottom: calc(15vh + 360px); z-index: 20; display: flex; flex-direction: column; align-items: center; }
+    /* 头像外层容器：相对定位 实现关注按钮半压效果 */
+    .avatar-container { position: relative; }
+    /* 头像：纯白2px粗描边+透明背景+圆形 无修改 完美样式 */
+    .avatar-img { width: 20vw; max-width:70px; height:20vw; max-height:70px; border-radius: 50%; border: 2px solid #FFFFFF; object-fit: cover; }
+    /* ✅ 关注按钮最终完美位置：加号中心对齐头像底部 + 28px+纯红无描边+20px加粗大加号+垂直居中 */
+    .follow-btn { position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%); width: 28px; height: 28px; border-radius: 50%; background-color: #e62143; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; opacity: 1; }
+  </style>
+</head>
+<body class="no-select">
+  <!-- 10张竖屏图片容器 ✅ 全部本地路径 -->
+  <div id="slider" class="img-container h-screen w-full relative">
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img1.jpg" class="h-full w-full object-cover" alt="竖屏图片1"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img2.jpg" class="h-full w-full object-cover" alt="竖屏图片2"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img3.jpg" class="h-full w-full object-cover" alt="竖屏图片3"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img4.jpg" class="h-full w-full object-cover" alt="竖屏图片4"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img5.jpg" class="h-full w-full object-cover" alt="竖屏图片5"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img6.jpg" class="h-full w-full object-cover" alt="竖屏图片6"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img7.jpg" class="h-full w-full object-cover" alt="竖屏图片7"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img8.jpg" class="h-full w-full object-cover" alt="竖屏图片8"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img9.jpg" class="h-full w-full object-cover" alt="竖屏图片9"></div>
+    <div class="h-screen w-full flex items-center justify-center bg-black"><img src="./img/img10.jpg" class="h-full w-full object-cover" alt="竖屏图片10"></div>
+  </div>
+
+  <!-- ✅ 完美布局：头像 + 关注按钮 中心点对齐头像底部 (精准半压+整体上移+不压点赞) -->
+  <div id="avatarBox" class="avatar-box">
+    <div class="avatar-container dy-btn">
+      <img id="avatarImg" src="" class="avatar-img" alt="用户头像">
+      <div class="follow-btn">+</div>
+    </div>
+  </div>
+
+  <!-- ✅ 抖音原版1:1：右侧实心白+半透图标 + 位置+大小+间距+数字 完全一致 -->
+  <div class="fixed right-[3vw] bottom-[15vh] flex flex-col gap-7 z-20">
+    <div class="dy-btn flex flex-col items-center justify-center">
+      <button id="likeBtn" class="w-16 h-16 rounded-full flex items-center justify-center">
+        <i class="fa-solid fa-heart text-[34px] icon-default"></i>
+      </button>
+      <span id="likeNum" class="num-default">0</span>
+    </div>
+    <div class="dy-btn flex flex-col items-center justify-center">
+      <button id="commentBtn" class="w-16 h-16 rounded-full flex items-center justify-center">
+        <i class="fa-solid fa-comment-dots text-[34px] icon-default"></i>
+      </button>
+      <span id="commentNum" class="num-default">0</span>
+    </div>
+    <div class="dy-btn flex flex-col items-center justify-center">
+      <button id="collectBtn" class="w-16 h-16 rounded-full flex items-center justify-center">
+        <i class="fa-solid fa-star text-[34px] icon-default"></i>
+      </button>
+      <span id="collectNum" class="num-default">0</span>
+    </div>
+  </div>
+
+  <!-- ✅ 扫码付费弹窗 ✔️ 补全【本地二维码图片路径】 核心修改处 -->
+  <div id="payModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl w-[90%] max-w-[380px] p-6 flex flex-col items-center">
+      <h3 class="text-[#e62143] text-xl font-bold mb-4">解锁更多内容 · 扫码付款</h3>
+      <p class="text-gray-600 text-center mb-5 text-sm">已浏览免费内容，扫码解锁海量高清图集+完整权限</p>
+      <!-- 核心修改：付费二维码本地路径 -->
+      <div class="w-[220px] h-[220px] rounded-lg overflow-hidden">
+        <img src="./img/pay-code.jpg" class="w-full h-full object-cover" alt="付费二维码">
+      </div>
+      <p class="text-gray-500 text-xs mb-6">支付成功自动解锁，微信/支付宝扫码，永久有效</p>
+      <button id="closeModal" class="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded-full text-gray-700 font-medium transition-colors">
+        <i class="fa-solid fa-xmark mr-1"></i> 关闭
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ========== ✅ 核心方法：随机数生成+抖音数字格式化 ==========
+    function randomNum(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    function formatNum(num) {
+      if(num >= 10000) {
+        let res = (num / 10000).toFixed(1);
+        return res.endsWith('.0') ? res.replace('.0','万') : res + '万';
+      }
+      return num.toString();
+    }
+
+    // ========== ✅ 核心升级：10张图【专属本地头像+专属固定数据+点赞状态】永久记忆 ==========
+    const slider = document.getElementById('slider');
+    const images = slider.querySelectorAll('div');
+    const total = images.length;
+    let currentIndex = 0;
+    const screenHeight = window.innerHeight;
+    // ✅ 10个头像全部本地路径，一一对应10张图片
+    const avatarList = [
+      "./avatar/tou1.jpg",
+      "./avatar/tou2.jpg",
+      "./avatar/tou3.jpg",
+      "./avatar/tou4.jpg",
+      "./avatar/tou5.jpg",
+      "./avatar/tou6.jpg",
+      "./avatar/tou7.jpg",
+      "./avatar/tou8.jpg",
+      "./avatar/tou9.jpg",
+      "./avatar/tou10.jpg"
+    ];
+    // 存储10张图片的【专属数据】+【点赞状态】，页面加载后永久固定
+    const imgDataList = [];
+    for(let i=0; i<total; i++){
+      const likeCount = randomNum(10000, 200000);
+      const commentCount = randomNum(Math.floor(likeCount/6), Math.floor(likeCount/5));
+      const collectCount = randomNum(5000, 80000);
+      imgDataList.push({
+        like: formatNum(likeCount),
+        comment: formatNum(commentCount),
+        collect: formatNum(collectCount),
+        isLiked: false
+      });
+    }
+
+    // ========== ✅ 切换图片同步渲染头像+数据+点赞状态 ==========
+    function renderCurrentImgData() {
+      const currentData = imgDataList[currentIndex];
+      document.getElementById('likeNum').innerText = currentData.like;
+      document.getElementById('commentNum').innerText = currentData.comment;
+      document.getElementById('collectNum').innerText = currentData.collect;
+      if(currentData.isLiked){
+        likeIcon.classList.add('like-active');
+        likeNumText.classList.add('like-active');
+      }else{
+        likeIcon.classList.remove('like-active');
+        likeNumText.classList.remove('like-active');
+      }
+      document.getElementById('avatarImg').src = avatarList[currentIndex];
+    }
+
+    // ========== 全局变量 ==========
+    const payModal = document.getElementById('payModal');
+    let isModalOpen = false;
+    const likeBtn = document.getElementById('likeBtn');
+    const likeIcon = likeBtn.querySelector('i');
+    const likeNumText = document.getElementById('likeNum');
+    const avatarContainer = document.querySelector('.avatar-container');
+
+    // ========== ✅ 点赞记忆逻辑 ==========
+    likeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      imgDataList[currentIndex].isLiked = !imgDataList[currentIndex].isLiked;
+      likeIcon.classList.toggle('like-active');
+      likeNumText.classList.toggle('like-active');
+    });
+
+    // ========== ✅ 弹窗逻辑 ==========
+    const closeModal = document.getElementById('closeModal');
+    const commentBtn = document.getElementById('commentBtn');
+    const collectBtn = document.getElementById('collectBtn');
+    const allImgs = document.querySelectorAll('img');
+    function openModal() {
+      if(isModalOpen) return;
+      payModal.classList.remove('hidden');
+      isModalOpen = true;
+    }
+    function closeModalFn() {
+      payModal.classList.add('hidden');
+      isModalOpen = false;
+    }
+    avatarContainer.addEventListener('click', openModal);
+    commentBtn.addEventListener('click', openModal);
+    collectBtn.addEventListener('click', openModal);
+    allImgs.forEach(img => img.addEventListener('click', openModal));
+    closeModal.addEventListener('click', closeModalFn);
+    payModal.addEventListener('click', e => e.target === payModal && closeModalFn());
+
+    // ========== ✅ 触屏滑动切图 ==========
+    let startY = 0, moveY = 0, moveDistance = 0;
+    slider.addEventListener('touchstart', e => {
+      if(isModalOpen) return;
+      startY = e.touches[0].clientY;
+    });
+    slider.addEventListener('touchmove', e => {
+      if(isModalOpen) return;
+      moveY = e.touches[0].clientY;
+      moveDistance = moveY - startY;
+    });
+    slider.addEventListener('touchend', () => {
+      if(isModalOpen) return;
+      const threshold = 50;
+      let isChange = false;
+      if (moveDistance < -threshold) {
+        currentIndex < total -1 ? (currentIndex++, isChange = true) : openModal();
+      }
+      if (moveDistance > threshold && currentIndex > 0) {
+        currentIndex--; isChange = true;
+      }
+      if(isChange){
+        updateSlider();
+        renderCurrentImgData();
+      }
+      moveDistance = 0;
+    });
+
+    // ========== ✅ 电脑滚轮适配 ==========
+    window.addEventListener('wheel', e => {
+      if(isModalOpen) return;
+      let isChange = false;
+      if (e.deltaY>0) {
+        currentIndex < total-1 ? (currentIndex++, isChange = true) : openModal();
+      } else {
+        currentIndex>0 && (currentIndex--, isChange = true);
+      }
+      currentIndex = Math.max(0, Math.min(currentIndex, total-1));
+      if(isChange){
+        updateSlider();
+        renderCurrentImgData();
+      }
+    });
+
+    function updateSlider() {
+      slider.style.transform = `translateY(-${currentIndex * screenHeight}px)`;
+    }
+    window.onload = renderCurrentImgData;
+    window.addEventListener('resize', () => location.reload());
+  </script>
+</body>
+</html>
