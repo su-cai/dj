@@ -196,53 +196,64 @@
     closeModal.addEventListener('click', closeModalFn);
     payModal.addEventListener('click', e => e.target === payModal && closeModalFn());
 
-    // ========== ✅ 触屏滑动切图 ==========
+    // ========== ✅ ✅ ✅ 核心修复：移动端触屏滑动切图【解决划不动BUG+抖音跟手效果】✅ ✅ ✅ */
     let startY = 0, moveY = 0, moveDistance = 0;
+    // 修复1: 添加passive:false 解决浏览器滚动拦截，所有手机兼容
     slider.addEventListener('touchstart', e => {
       if(isModalOpen) return;
       startY = e.touches[0].clientY;
-    });
+      slider.style.transition = 'none'; // 滑动时关闭过渡动画，实现跟手
+    }, { passive: false });
+
     slider.addEventListener('touchmove', e => {
       if(isModalOpen) return;
       moveY = e.touches[0].clientY;
       moveDistance = moveY - startY;
-    });
+      // 修复2: 实时跟随手指滑动，抖音原版丝滑效果，不会卡顿
+      slider.style.transform = `translateY(${ -currentIndex * screenHeight + moveDistance }px)`;
+      // 禁止浏览器默认滚动行为，彻底解决冲突
+      e.preventDefault();
+    }, { passive: false });
+
     slider.addEventListener('touchend', () => {
       if(isModalOpen) return;
-      const threshold = 50;
-      let isChange = false;
+      const threshold = 40; // 降低阈值，更容易触发滑动，适配所有手机
+      slider.style.transition = 'transform 0.4s ease-out'; // 松手恢复过渡动画
+      // 修复3: 强制锁死边界值，彻底杜绝下标越界卡死
       if (moveDistance < -threshold) {
-        currentIndex < total -1 ? (currentIndex++, isChange = true) : openModal();
+        currentIndex = Math.min(currentIndex + 1, total - 1);
+        // 滑到最后一张继续上滑，弹出付费弹窗
+        if(currentIndex === total -1){
+          setTimeout(()=>{ openModal() }, 300);
+        }
+      } else if (moveDistance > threshold) {
+        currentIndex = Math.max(currentIndex - 1, 0);
       }
-      if (moveDistance > threshold && currentIndex > 0) {
-        currentIndex--; isChange = true;
-      }
-      if(isChange){
-        updateSlider();
-        renderCurrentImgData();
-      }
+      // 执行滑动并渲染数据
+      updateSlider();
+      renderCurrentImgData();
+      // 重置滑动距离
       moveDistance = 0;
     });
 
-    // ========== ✅ 电脑滚轮适配 ==========
+    // ========== ✅ 电脑滚轮适配 优化版 ==========
     window.addEventListener('wheel', e => {
       if(isModalOpen) return;
-      let isChange = false;
+      e.preventDefault(); // 禁止页面滚动
       if (e.deltaY>0) {
-        currentIndex < total-1 ? (currentIndex++, isChange = true) : openModal();
+        currentIndex = Math.min(currentIndex + 1, total - 1);
+        if(currentIndex === total -1){ setTimeout(()=>{ openModal() }, 300); }
       } else {
-        currentIndex>0 && (currentIndex--, isChange = true);
+        currentIndex = Math.max(currentIndex - 1, 0);
       }
-      currentIndex = Math.max(0, Math.min(currentIndex, total-1));
-      if(isChange){
-        updateSlider();
-        renderCurrentImgData();
-      }
-    });
+      updateSlider();
+      renderCurrentImgData();
+    }, { passive: false });
 
     function updateSlider() {
       slider.style.transform = `translateY(-${currentIndex * screenHeight}px)`;
     }
+    // 页面加载初始化
     window.onload = renderCurrentImgData;
     window.addEventListener('resize', () => location.reload());
   </script>
