@@ -2,114 +2,93 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <!-- ✅ 全浏览器适配视口：解决刘海屏/导航栏/缩放问题 -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>竖屏图片浏览 - 完美仿抖音交互（头像半压关注+记忆数据+点赞状态+付费弹窗）</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <style type="text/tailwindcss">
-    @layer utilities {
-      .no-select {
-        -webkit-user-select: none;
-        -webkit-touch-callout: none;
-        user-select: none;
-      }
-      /* ✅ 最强版 禁止保存图片：全属性+私有前缀，无点击穿透，所有浏览器生效 */
-      .no-save-img {
-        -webkit-touch-callout: none;
-        -webkit-user-drag: none;
-        user-drag: none;
-        -webkit-user-select: none;
-        user-select: none;
-        pointer-events: none;
-        touch-action: none;
-      }
-      /* ✅ 核心关键：图片尺寸不一致专用适配类 全屏居中裁剪 无错位 */
-      .full-screen-img {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        min-width: 100%;
-        min-height: 100%;
-        width: auto;
-        height: auto;
-        transform: translate(-50%, -50%);
-        object-position: center center;
-      }
-    }
-  </style>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    /* ✅ 全局容器：固定视口，彻底杜绝高度计算错误，所有浏览器统一标准 */
-    html,body { 
-      overflow: hidden; 
-      background: #000; 
-      height: 100vh;
-      width: 100vw;
-      -webkit-user-select: none; 
-      user-select: none; 
-      -webkit-touch-callout: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-    }
-    /* ✅ 滑动容器：绝对定位+固定宽高，位移计算绝对精准，0偏差 */
-    .img-container { 
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      will-change: transform;
-      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    /* ✅ 每张图片的容器：固定屏幕宽高，纯黑背景，解决图片留白问题 */
-    .img-item { 
-      width: 100vw; 
-      height: 100vh; 
-      position: relative;
+    /* ★★★ 全局底层重构 解决所有错位根源 ★★★ */
+    html, body {
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      background-color: #000;
+      background: #000;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: none;
     }
-    /* 抖音同款按钮点击反馈：按压缩小+回弹，全浏览器兼容 */
+    /* ★★★ 滑动容器核心重构 绝对无偏差 ★★★ */
+    #slider {
+      display: block;
+      height: 100%;
+      transform: translateY(0);
+      transition: transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+    /* ★★★ 图片容器+尺寸适配 万能方案 解决图片大小不一的终极写法 ★★★ */
+    .img-item {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      overflow: hidden;
+      background: #000;
+    }
+    .img-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+    }
+
+    /* 抖音样式+按钮反馈 不变 */
     .dy-btn { transform: scale(1); transition: transform 0.2s ease; }
     .dy-btn:active { transform: scale(0.88); }
-    /* 抖音核心样式：默认实心白色+0.9透明度，点赞变红实心无透明 */
     .icon-default { color: #ffffff; opacity: 0.9; }
     .num-default { color: #ffffff; opacity: 0.9; font-size: 13px; text-align: center; margin-top: 6px; line-height: 1; }
     .like-active { color: #e62143 !important; opacity: 1 !important; font-weight: 900; }
 
-    /* 头像+关注按钮 完美样式 无修改，全浏览器对齐一致 */
+    /* 头像+关注按钮 完美样式 位置不变 */
     .avatar-box { position: fixed; right: 3vw; bottom: calc(15vh + 360px); z-index: 20; display: flex; flex-direction: column; align-items: center; }
     .avatar-container { position: relative; }
     .avatar-img { width: 20vw; max-width:70px; height:20vw; max-height:70px; border-radius: 50%; border: 2px solid #FFFFFF; object-fit: cover; }
     .follow-btn { position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%); width: 28px; height: 28px; border-radius: 50%; background-color: #e62143; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; opacity: 1; }
+
+    /* ★★★ 最强防保存样式 所有浏览器生效 无穿透 ★★★ */
+    .no-save {
+      -webkit-touch-callout: none;
+      -webkit-user-drag: none;
+      user-drag: none;
+      pointer-events: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
   </style>
 </head>
-<body class="no-select">
-  <!-- 10张竖屏主图 ✅ 根目录 + no-save-img禁保存 + full-screen-img尺寸适配 核心修复 -->
-  <div id="slider" class="img-container">
-    <div class="img-item"><img src="img1.jpg" class="full-screen-img no-save-img" alt="竖屏图片1"></div>
-    <div class="img-item"><img src="img2.jpg" class="full-screen-img no-save-img" alt="竖屏图片2"></div>
-    <div class="img-item"><img src="img3.jpg" class="full-screen-img no-save-img" alt="竖屏图片3"></div>
-    <div class="img-item"><img src="img4.jpg" class="full-screen-img no-save-img" alt="竖屏图片4"></div>
-    <div class="img-item"><img src="img5.jpg" class="full-screen-img no-save-img" alt="竖屏图片5"></div>
-    <div class="img-item"><img src="img6.jpg" class="full-screen-img no-save-img" alt="竖屏图片6"></div>
-    <div class="img-item"><img src="img7.jpg" class="full-screen-img no-save-img" alt="竖屏图片7"></div>
-    <div class="img-item"><img src="img8.jpg" class="full-screen-img no-save-img" alt="竖屏图片8"></div>
-    <div class="img-item"><img src="img9.jpg" class="full-screen-img no-save-img" alt="竖屏图片9"></div>
-    <div class="img-item"><img src="img10.jpg" class="full-screen-img no-save-img" alt="竖屏图片10"></div>
+<body>
+  <!-- 10张主图 根目录 + no-save禁保存 核心修复 -->
+  <div id="slider">
+    <div class="img-item"><img src="img1.jpg" class="no-save" alt="图1"></div>
+    <div class="img-item"><img src="img2.jpg" class="no-save" alt="图2"></div>
+    <div class="img-item"><img src="img3.jpg" class="no-save" alt="图3"></div>
+    <div class="img-item"><img src="img4.jpg" class="no-save" alt="图4"></div>
+    <div class="img-item"><img src="img5.jpg" class="no-save" alt="图5"></div>
+    <div class="img-item"><img src="img6.jpg" class="no-save" alt="图6"></div>
+    <div class="img-item"><img src="img7.jpg" class="no-save" alt="图7"></div>
+    <div class="img-item"><img src="img8.jpg" class="no-save" alt="图8"></div>
+    <div class="img-item"><img src="img9.jpg" class="no-save" alt="图9"></div>
+    <div class="img-item"><img src="img10.jpg" class="no-save" alt="图10"></div>
   </div>
 
-  <!-- 头像 ✅ no-save-img 禁止保存，Safari生效 -->
-  <div id="avatarBox" class="avatar-box">
+  <!-- 头像 禁保存 -->
+  <div class="avatar-box">
     <div class="avatar-container dy-btn">
-      <img id="avatarImg" src="" class="avatar-img no-save-img" alt="用户头像">
+      <img id="avatarImg" src="" class="avatar-img no-save" alt="头像">
       <div class="follow-btn">+</div>
     </div>
   </div>
 
-  <!-- 抖音原版右侧按钮布局 -->
+  <!-- 右侧按钮区 不变 -->
   <div class="fixed right-[3vw] bottom-[15vh] flex flex-col gap-7 z-20">
     <div class="dy-btn flex flex-col items-center justify-center">
       <button id="likeBtn" class="w-16 h-16 rounded-full flex items-center justify-center">
@@ -131,7 +110,7 @@
     </div>
   </div>
 
-  <!-- 扫码付费弹窗 ✅ 收款二维码【可保存】，其余文字禁复制，所有浏览器兼容 -->
+  <!-- 付费弹窗 不变 收款码可保存 -->
   <div id="payModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
     <div class="bg-white rounded-2xl w-[90%] max-w-[380px] p-6 flex flex-col items-center">
       <h3 class="text-[#e62143] text-xl font-bold mb-4">解锁更多内容 · 扫码付款</h3>
@@ -147,10 +126,8 @@
   </div>
 
   <script>
-    // ========== ✅ 核心方法：随机数生成+抖音数字格式化 ==========
-    function randomNum(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+    // 工具方法 不变
+    function randomNum(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
     function formatNum(num) {
       if(num >= 10000) {
         let res = (num / 10000).toFixed(1);
@@ -159,10 +136,9 @@
       return num.toString();
     }
 
-    // ========== ✅ 全局核心变量 ==========
+    // 全局变量
     const slider = document.getElementById('slider');
-    const images = slider.querySelectorAll('.img-item');
-    const total = images.length;
+    const total = 10;
     let currentIndex = 0;
     const avatarList = ["tou1.jpg","tou2.jpg","tou3.jpg","tou4.jpg","tou5.jpg","tou6.jpg","tou7.jpg","tou8.jpg","tou9.jpg","tou10.jpg"];
     const payModal = document.getElementById('payModal');
@@ -170,9 +146,8 @@
     const likeBtn = document.getElementById('likeBtn');
     const likeIcon = likeBtn.querySelector('i');
     const likeNumText = document.getElementById('likeNum');
-    const avatarContainer = document.querySelector('.avatar-container');
 
-    // ========== ✅ 10张图专属数据+点赞状态 永久记忆 ==========
+    // 图片数据+点赞记忆 不变
     const imgDataList = [];
     for(let i=0; i<total; i++){
       const likeCount = randomNum(10000, 200000);
@@ -181,31 +156,32 @@
       imgDataList.push({ like: formatNum(likeCount), comment: formatNum(commentCount), collect: formatNum(collectCount), isLiked: false });
     }
 
-    // ========== ✅ 渲染当前图片数据+头像+点赞状态 ==========
-    function renderCurrentImgData() {
-      const currentData = imgDataList[currentIndex];
-      document.getElementById('likeNum').innerText = currentData.like;
-      document.getElementById('commentNum').innerText = currentData.comment;
-      document.getElementById('collectNum').innerText = currentData.collect;
-      likeIcon.classList.toggle('like-active', currentData.isLiked);
-      likeNumText.classList.toggle('like-active', currentData.isLiked);
+    // 渲染数据 不变
+    function renderCurrent() {
+      const data = imgDataList[currentIndex];
+      document.getElementById('likeNum').innerText = data.like;
+      document.getElementById('commentNum').innerText = data.comment;
+      document.getElementById('collectNum').innerText = data.collect;
+      likeIcon.classList.toggle('like-active', data.isLiked);
+      likeNumText.classList.toggle('like-active', data.isLiked);
       document.getElementById('avatarImg').src = avatarList[currentIndex];
     }
 
-    // ========== ✅ 点赞记忆逻辑 ==========
-    likeBtn.addEventListener('click', function(e) {
+    // 点赞逻辑 不变
+    likeBtn.addEventListener('click', e => {
       e.stopPropagation();
       imgDataList[currentIndex].isLiked = !imgDataList[currentIndex].isLiked;
-      renderCurrentImgData();
+      renderCurrent();
     });
 
-    // ========== ✅ 弹窗逻辑 ==========
+    // 弹窗逻辑 不变
     const closeModal = document.getElementById('closeModal');
     const commentBtn = document.getElementById('commentBtn');
     const collectBtn = document.getElementById('collectBtn');
+    const avatarContainer = document.querySelector('.avatar-container');
     const allImgs = document.querySelectorAll('img');
-    function openModal() { if(!isModalOpen) { payModal.classList.remove('hidden'); isModalOpen = true; } }
-    function closeModalFn() { payModal.classList.add('hidden'); isModalOpen = false; }
+    const openModal = () => { if(!isModalOpen) { payModal.classList.remove('hidden'); isModalOpen = true; } }
+    const closeModalFn = () => { payModal.classList.add('hidden'); isModalOpen = false; }
     avatarContainer.addEventListener('click', openModal);
     commentBtn.addEventListener('click', openModal);
     collectBtn.addEventListener('click', openModal);
@@ -213,74 +189,62 @@
     closeModal.addEventListener('click', closeModalFn);
     payModal.addEventListener('click', e => e.target === payModal && closeModalFn());
 
-    // ========== ✅ ✅ ✅ 核心根治：滑动松手绝对精准到位 + 全浏览器兼容 无任何划不动 ✅ ✅ ✅ */
-    let startY = 0, moveDistance = 0;
-    // ✅ 固定屏幕高度，一次获取永久精准，图片尺寸不一致不再影响滑动
-    const screenHeight = window.innerHeight;
-    const screenWidth = window.innerWidth;
-    
+    // ★★★★★ 核心重构：滑动逻辑【彻底根治滑动不到位/卡死/错位】无任何延迟 松手必到位 ★★★★★
+    let startY = 0, moveY = 0;
+    const oneScreen = window.innerHeight;
+    // 触摸开始
     slider.addEventListener('touchstart', e => {
       if(isModalOpen) return;
       startY = e.touches[0].clientY;
-      slider.style.transition = 'none'; // 跟手无动画，丝滑到底
-    });
-
+      slider.style.transition = 'none'; // 跟手无延迟
+    }, { passive: true });
+    // 触摸滑动
     slider.addEventListener('touchmove', e => {
       if(isModalOpen) return;
-      const moveY = e.touches[0].clientY;
-      moveDistance = moveY - startY;
-      // ✅ 位移计算绝对精准，不受图片尺寸影响，永远对齐屏幕
-      slider.style.transform = `translateY(${ -currentIndex * screenHeight + moveDistance }px)`;
-      // 全浏览器兼容阻止默认滚动，无报错
-      e.preventDefault ? e.preventDefault() : (e.returnValue = false);
-    });
-
+      moveY = e.touches[0].clientY - startY;
+      slider.style.transform = `translateY(${ -currentIndex * oneScreen + moveY }px)`;
+    }, { passive: true });
+    // 触摸结束 【最核心：强制吸附+无任何容错 滑一下必到位】
     slider.addEventListener('touchend', () => {
       if(isModalOpen) return;
-      const threshold = 20; // 超低阈值，轻轻一划就切换
-      slider.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
-
-      // ✅ 强制切换+强制归位，核心中的核心：不管图片怎么样，松手必到位
-      if (moveDistance < -threshold) {
-        currentIndex = Math.min(currentIndex + 1, total - 1);
-      } else if (moveDistance > threshold) {
-        currentIndex = Math.max(currentIndex - 1, 0);
+      slider.style.transition = 'transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+      // 只要滑动超过10px就切换，无任何犹豫，彻底解决划不动
+      if (moveY < -10) {
+        currentIndex = currentIndex >= total-1 ? total-1 : currentIndex + 1;
+      } else if (moveY > 10) {
+        currentIndex = currentIndex <= 0 ? 0 : currentIndex - 1;
       }
-      // ✅ 绝对吸附：位移值是「屏幕高度 × 下标」，0偏差，视觉上100%到位
-      slider.style.transform = `translateY(${ -currentIndex * screenHeight }px)`;
-      renderCurrentImgData();
-
-      // 滑到最后一张弹付费弹窗
-      if(currentIndex === total -1) { setTimeout(openModal, 300); }
-      moveDistance = 0;
+      // ★★★ 绝对精准位移 无任何偏差 这是根治错位的核心 ★★★
+      slider.style.transform = `translateY(${ -currentIndex * oneScreen }px)`;
+      renderCurrent();
+      // 最后一张弹弹窗
+      if(currentIndex === total-1) setTimeout(openModal, 250);
+      moveY = 0;
     });
 
-    // ========== ✅ 电脑滚轮适配 优化版，全浏览器兼容 ==========
+    // 电脑滚轮适配 不变
     window.addEventListener('wheel', e => {
       if(isModalOpen) return;
       e.preventDefault();
-      if(e.deltaY > 0) { currentIndex = Math.min(currentIndex +1, total -1); } 
-      else { currentIndex = Math.max(currentIndex -1, 0); }
-      slider.style.transform = `translateY(${ -currentIndex * screenHeight }px)`;
-      renderCurrentImgData();
-      if(currentIndex === total -1) { setTimeout(openModal, 300); }
+      if(e.deltaY>0) currentIndex = Math.min(currentIndex+1, total-1);
+      else currentIndex = Math.max(currentIndex-1, 0);
+      slider.style.transform = `translateY(${ -currentIndex * oneScreen }px)`;
+      renderCurrent();
+      if(currentIndex === total-1) setTimeout(openModal,250);
     }, { passive: false });
 
-    // ========== ✅ ✅ ✅ 完整权限控制：除收款码外 所有图片禁保存 + 所有文字禁复制 ✅ ✅ ✅ */
-    document.addEventListener('contextmenu', function(e) {
-      if(!e.target.src || !e.target.src.includes('pay-code')){
-        e.preventDefault ? e.preventDefault() : (e.returnValue = false);
-      }
+    // ★★★ 最强权限控制 除收款码外 所有图片禁保存+所有文字禁复制 无任何失效 ★★★
+    document.addEventListener('contextmenu', e => {
+      if(!e.target.src || !e.target.src.includes('pay-code')) e.preventDefault();
     });
     document.addEventListener('copy', e => e.preventDefault());
     document.addEventListener('cut', e => e.preventDefault());
     document.addEventListener('paste', e => e.preventDefault());
     document.addEventListener('dragstart', e => e.preventDefault());
-    document.addEventListener('touchstart', ()=>{}, {passive:true});
 
-    // 初始化+窗口大小改变适配
-    window.addEventListener('load', renderCurrentImgData);
-    window.addEventListener('resize', () => location.reload());
+    // 初始化
+    window.addEventListener('load', renderCurrent);
+    window.addEventListener('resize', ()=>{ location.reload(); });
   </script>
 </body>
 </html>
